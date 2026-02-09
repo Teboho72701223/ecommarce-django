@@ -1,3 +1,11 @@
+"""
+Views for the ecommerce application.
+
+This module handles user authentication, store management,
+product browsing, cart functionality, checkout processing,
+password reset, and REST API endpoints.
+"""
+
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -38,12 +46,20 @@ from .permissions import IsVendor
 # HOME
 @login_required
 def home(request):
+    """
+    Displays the home page with a list of all available stores.
+    """
     stores = Store.objects.all()  # Show all vendor stores
     return render(request, 'store/home.html', {'stores': stores})
 
 
 # Store Details
 def store_detail(request, store_id):
+    """
+    Displays detailed information about a store, including products and reviews.
+
+    Allows authenticated users to submit reviews.
+    """
     store = get_object_or_404(Store, id=store_id)
     products = store.products.all()
     # newest review will be shown first
@@ -82,9 +98,10 @@ def store_detail(request, store_id):
 
 
 # AUTHENTICATION
-# The user will enter depending if they are a
-# vendor or customer they will be able to enter diffrent applications
 def login_view(request):
+    """
+    Handles user login and redirects based on user role.
+    """
     if request.user.is_authenticated:
         if getattr(request.user, 'is_vendor', False):
             return redirect('ecommerce:vendor_dashboard')
@@ -107,25 +124,31 @@ def login_view(request):
 
 @login_required
 def custom_logout(request):
+    """
+    Logs the user out and redirects to the login page.
+    """
     logout(request)
     messages.info(request, "You have been logged out.")
     return redirect('ecommerce:login')
 
 
-# Registeration
+# Registration
 def register(request):
-    # Will just display options between vendor/customer
+    """
+    Displays the registration options for vendors and customers.
+    """
     return render(request, 'store/register.html')
 
 
-# CUSTOMER REGISTRATION
-
 def customer_register(request):
+    """
+    Handles customer account registration.
+    """
     if request.method == 'POST':
         form = CustomerRegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_vendor = False  # important flag
+            user.is_vendor = False
             user.save()
             messages.success(
                 request,
@@ -138,9 +161,10 @@ def customer_register(request):
     return render(request, 'store/customer_register.html', {'form': form})
 
 
-# VENDOR REGISTRATION
-
 def vendor_register(request):
+    """
+    Handles vendor account registration and profile creation.
+    """
     if request.method == 'POST':
         form = VendorRegisterForm(request.POST)
         if form.is_valid():
@@ -149,10 +173,8 @@ def vendor_register(request):
             user.is_customer = False
             user.save()
 
-            # Create the Vendor profile immediately after saving user
             Vendor.objects.create(
                 user=user,
-                # store_name=form.cleaned_data['store_name'],
                 phone=form.cleaned_data['phone'],
                 address=form.cleaned_data['address'],
             )
@@ -164,16 +186,22 @@ def vendor_register(request):
     return render(request, 'store/vendor_register.html', {'form': form})
 
 
-# CART (CUSTOMER SIDE)
+# CART
 
 @login_required
 def product_list(request):
-    products = Product.objects.all()  # List the products of the vendor
+    """
+    Displays all available products.
+    """
+    products = Product.objects.all()
     return render(request, 'store/product_list.html', {'products': products})
 
 
 @login_required
 def clear_cart(request):
+    """
+    Clears all items from the shopping cart.
+    """
     request.session['cart'] = {}
     request.session.modified = True
     return redirect('ecommerce:cart')
@@ -181,11 +209,13 @@ def clear_cart(request):
 
 @login_required
 def add_to_cart(request, product_id):
+    """
+    Adds a product to the shopping cart.
+    """
     product = get_object_or_404(Product, id=product_id)
     cart = request.session.get('cart', {})
 
     if str(product_id) in cart:
-        # Will count how many items that are on customers cart
         cart[str(product_id)]['quantity'] += 1
     else:
         cart[str(product_id)] = {
@@ -199,9 +229,11 @@ def add_to_cart(request, product_id):
     return redirect('ecommerce:cart')
 
 
-# Will show the total of the customers cart viewing whta they have ordered
 @login_required
 def view_cart(request):
+    """
+    Displays the contents of the shopping cart and total cost.
+    """
     cart = request.session.get('cart', {})
     total = sum(item['price'] * item['quantity'] for item in cart.values())
 
@@ -213,6 +245,9 @@ def view_cart(request):
 
 @login_required
 def remove_from_cart(request, product_id):
+    """
+    Removes a product from the shopping cart.
+    """
     cart = request.session.get('cart', {})
     if str(product_id) in cart:
         del cart[str(product_id)]
@@ -222,6 +257,9 @@ def remove_from_cart(request, product_id):
 
 @login_required
 def checkout(request):
+    """
+    Handles checkout process, order creation, and invoice email sending.
+    """
     cart = request.session.get('cart', {})
     cart_items = []
     total = 0
@@ -237,48 +275,42 @@ def checkout(request):
         })
         total += total_price
 
-    # ONLY handle order + email on POST
     if request.method == "POST":
-        # create order
         order = Order.objects.create(
             user=request.user,
             email=request.POST.get("email"),
             total=total,
         )
 
-        # send invoice email
         email_sent = send_invoice_email(order)
 
-        # warn if email failed
         if not email_sent:
             messages.warning(
                 request,
                 "Your order was placed successfully, but we could not send the invoice email."
             )
 
-        # clear cart
         request.session["cart"] = {}
 
-        return redirect("ecommerce:home")  # or order success page
+        return redirect("ecommerce:home")
 
-    #  GET request → just show page
     return render(request, 'store/checkout.html', {
         'cart_items': cart_items,
         'total': total
     })
 
 
-# VENDOR DASHBOARD & STORE MANAGEMENT
 @login_required
 def vendor_dashboard(request):
-    # Check if the user is a vendor
+    """
+    Displays the vendor dashboard with managed stores.
+    """
     if not hasattr(request.user, 'is_vendor') or not request.user.is_vendor:
         return render(request, 'store/not_vendor.html')
-    # Get vendors stores
+
     try:
         vendor = Vendor.objects.get(user=request.user)
     except Vendor.DoesNotExist:
-        # handle case where the user is not a vendor
         vendor = None
 
     stores = Store.objects.filter(vendor=vendor) if vendor else []
@@ -292,6 +324,9 @@ def vendor_dashboard(request):
 
 @login_required
 def create_store(request):
+    """
+    Allows vendors to create a new store.
+    """
     if request.method == "POST":
         form = StoreForm(request.POST, request.FILES)
 
@@ -308,28 +343,25 @@ def create_store(request):
             store.vendor = vendor
             store.save()
 
-            # Tweet AFTER successful save
             new_store_tweet = (
                 f"New store open on Teboho eCommarce!\n"
                 f"{store.name}\n\n{store.description}"
             )
-            # try:
-            Tweet._instance.make_tweet({"text": new_store_tweet})
-            # except Exception as e:
-                # Log it, but do NOT crash
-                # print("Tweet failed:", e)
 
-            return redirect('ecommerce:vendor_dashboard')  # adjust if needed
+            Tweet._instance.make_tweet({"text": new_store_tweet})
+
+            return redirect('ecommerce:vendor_dashboard')
     else:
         form = StoreForm()
 
     return render(request, "store/create_store.html", {"form": form})
 
 
-
-
 @login_required
 def edit_store(request, store_id):
+    """
+    Allows vendors to edit store details.
+    """
     vendor = Vendor.objects.get(user=request.user)
     store = get_object_or_404(Store, id=store_id, vendor=vendor)
 
@@ -337,7 +369,7 @@ def edit_store(request, store_id):
         store.name = request.POST.get('name')
         store.description = request.POST.get('description')
         store.vendor = vendor
-        store.save()  # Save changes that have been made
+        store.save()
         messages.success(request, "Store details updated successfully!")
         return redirect('ecommerce:vendor_dashboard')
 
@@ -346,6 +378,9 @@ def edit_store(request, store_id):
 
 @login_required
 def delete_store(request, store_id):
+    """
+    Deletes a vendor store.
+    """
     vendor = get_object_or_404(Vendor, user=request.user)
     store = get_object_or_404(Store, id=store_id, vendor=vendor)
     store.delete()
@@ -354,6 +389,9 @@ def delete_store(request, store_id):
 
 @login_required
 def add_product(request, store_id):
+    """
+    Allows vendors to add new products to a store.
+    """
     vendor = Vendor.objects.filter(user=request.user).first()
     if not vendor:
         return HttpResponse(
@@ -370,7 +408,6 @@ def add_product(request, store_id):
             product.store = store
             product.save()
 
-            # Tweet AFTER successful save
             new_product_tweet = (
                 f"New product just dropped on Teboho eCommarce!\n"
                 f"{product.name}\n"
@@ -393,12 +430,13 @@ def add_product(request, store_id):
     )
 
 
-
 @login_required
 def edit_product(request, product_id):
+    """
+    Allows vendors to edit product details.
+    """
     product = get_object_or_404(Product, id=product_id)
 
-    # Ensure only the store owner can edit
     if product.store.owner != request.user:
         messages.error(
             request, "You don't have permission to edit this product."
@@ -419,6 +457,9 @@ def edit_product(request, product_id):
 
 @login_required
 def store_products(request, store_id):
+    """
+    Displays all products for a specific vendor store.
+    """
     vendor = Vendor.objects.get(user=request.user)
     store = get_object_or_404(Store, id=store_id, vendor=vendor)
     products = store.products.all()
@@ -430,6 +471,9 @@ def store_products(request, store_id):
 
 @login_required
 def delete_product(request, product_id):
+    """
+    Deletes a product from a vendor store.
+    """
     product = get_object_or_404(
         Product, id=product_id, store__owner=request.user
         )
@@ -438,7 +482,11 @@ def delete_product(request, product_id):
 
 
 # PASSWORD RESET
+
 class CustomPasswordResetView(auth_views.PasswordResetView):
+    """
+    Handles password reset request form display.
+    """
     template_name = "store/password_reset.html"
     email_template_name = "store/password_reset_email.html"
     subject_template_name = "store/password_reset_subject.txt"
@@ -446,20 +494,31 @@ class CustomPasswordResetView(auth_views.PasswordResetView):
 
 
 class CustomPasswordResetDoneView(auth_views.PasswordResetDoneView):
+    """
+    Displays password reset confirmation message.
+    """
     template_name = "store/password_reset_done.html"
 
 
 class CustomPasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+    """
+    Handles password reset confirmation.
+    """
     template_name = "store/password_reset_confirm.html"
     success_url = reverse_lazy("password_reset_complete")
 
 
 class CustomPasswordResetCompleteView(auth_views.PasswordResetCompleteView):
+    """
+    Displays password reset completion message.
+    """
     template_name = "store/password_reset_complete.html"
 
 
-# Email
 def build_email(user, reset_url):
+    """
+    Builds a password reset email.
+    """
     subject = "Password Reset"
     body = (
         f"Hi {user.username},\n\n"
@@ -476,10 +535,12 @@ def build_email(user, reset_url):
 
 
 def generate_reset_url(request, user):
+    """
+    Generates and stores a secure password reset URL.
+    """
     token = secrets.token_urlsafe(32)
     hashed_token = sha1(token.encode()).hexdigest()
 
-    # Remove old tokens
     ResetToken.objects.filter(user=user).delete()
 
     ResetToken.objects.create(
@@ -495,7 +556,11 @@ def generate_reset_url(request, user):
 
 User = get_user_model()
 
+
 def send_password_reset(request):
+    """
+    Sends a password reset email to the user.
+    """
     user_email = request.POST.get('email')
 
     user = User.objects.filter(email=user_email).first()
@@ -503,11 +568,13 @@ def send_password_reset(request):
         url = generate_reset_url(request, user)
         build_email(user, url).send()
 
-    # Always redirect (prevents email enumeration)
     return HttpResponseRedirect(reverse('ecommerce:login'))
 
 
 def reset_user_password(request, token):
+    """
+    Validates password reset token and displays reset form.
+    """
     hashed_token = sha1(token.encode()).hexdigest()
 
     reset_token = ResetToken.objects.filter(token=hashed_token).first()
@@ -523,8 +590,11 @@ def reset_user_password(request, token):
 
     return render(request, 'password_reset.html', {'token': token})
 
-    
+
 def change_user_password(username, password):
+    """
+    Changes the user's password.
+    """
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
@@ -533,9 +603,12 @@ def change_user_password(username, password):
     user.set_password(password)
     user.save(update_fields=["password"])
     return True
-    
+
 
 def reset_password(request):
+    """
+    Handles password update after token validation.
+    """
     username = request.session.get('user')
     token = request.session.get('token')
 
@@ -555,13 +628,10 @@ def reset_password(request):
     except ResetToken.DoesNotExist:
         return HttpResponseRedirect(reverse('ecommerce:password_reset'))
 
-    # Change password
     change_user_password(username, password)
 
-    # Invalidate token
     reset_token.delete()
 
-    # Cleanup session
     request.session.pop('user', None)
     request.session.pop('token', None)
 
@@ -569,25 +639,35 @@ def reset_password(request):
 
 
 def forgot_password(request):
+    """
+    Displays the forgot password page.
+    """
     return render(request, 'store/forgot_password.html')
 
 
 # ---------------- Vendor Stores ----------------
 
 class StoreViewSet(ModelViewSet):
+    """
+    API endpoint for managing vendor stores.
+    """
 
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
     permission_classes = [IsAuthenticated, IsVendor]
 
     def get_queryset(self):
-
+        """
+        Returns stores belonging to the authenticated vendor.
+        """
         return Store.objects.filter(
             vendor__user=self.request.user
         )
 
     def perform_create(self, serializer):
-
+        """
+        Assigns vendor to newly created store.
+        """
         vendor = self.request.user.vendor_profile
         serializer.save(vendor=vendor)
 
@@ -595,21 +675,29 @@ class StoreViewSet(ModelViewSet):
 # ---------------- Products ----------------
 
 class ProductViewSet(ModelViewSet):
+    """
+    API endpoint for managing vendor products.
+    """
 
     queryset = Product.objects.all() 
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated, IsVendor]
 
     def get_queryset(self):
-
+        """
+        Returns products belonging to the authenticated vendor.
+        """
         return Product.objects.filter(
             store__vendor__user=self.request.user
         )
 
 
-# ---------------- Reviews (Read Only) ----------------
+# ---------------- Reviews ----------------
 
 class ReviewViewSet(ModelViewSet):
+    """
+    API endpoint for viewing product reviews.
+    """
 
     queryset = Product.objects.all() 
     serializer_class = ReviewSerializer
@@ -621,22 +709,32 @@ class ReviewViewSet(ModelViewSet):
 # ---------------- Public Browsing ----------------
 
 class VendorStoresView(ListAPIView):
+    """
+    Public API view for listing a vendor's stores.
+    """
 
     serializer_class = StoreSerializer
 
     def get_queryset(self):
-
+        """
+        Returns stores for a specific vendor.
+        """
         return Store.objects.filter(
             vendor_id=self.kwargs["vendor_id"]
         )
 
 
 class StoreProductsView(ListAPIView):
+    """
+    Public API view for listing products in a store.
+    """
 
     serializer_class = ProductSerializer
 
     def get_queryset(self):
-
+        """
+        Returns products for a specific store.
+        """
         return Product.objects.filter(
             store_id=self.kwargs["store_id"]
         )
