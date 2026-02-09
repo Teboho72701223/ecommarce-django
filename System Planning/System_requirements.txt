@@ -1,0 +1,34 @@
+A. Admin
+= Manage all users (vendors and customers)
+= Approve or remove stores
+= Monitor site activity and handle reported issues
+
+B. Vendor
+= Store Management
+    = Create new stores
+    = View a list of their stores
+    = Edit store details (name, logo, description)
+    = Delete a store
+
+= Product Management
+    = Add products to their stores
+    = Edit product details (price, quantity, description)
+    = Delete products
+    = View all products in their stores
+
+=Order View
+    =View orders placed for their products
+
+C. Customer
+= Product Browsing
+    = View stores and products
+    = Search and filter products
+
+= Cart Management
+    = Add products from different stores to cart
+    = View and remove items from cart
+    = Checkout (simulate payment)
+
+= Reviews
+    = Leave reviews on purchased products
+    = View reviews from other buyers

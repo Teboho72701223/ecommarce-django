@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Stores | MyShop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'store/style.css' %}">
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'ecommerce:home' %}">MyShop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'ecommerce:home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:product_list' %}">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'ecommerce:vendor_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:cart' %}">Cart</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:logout' %}">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="text-center py-5 bg-light border-bottom">
+        <div class="container">
+            <h1 class="fw-bold display-5">Explore Our Vendor Stores</h1>
+            <p class="lead text-muted mt-3">
+                Discover a variety of vendor shops offering unique products just for you.
+            </p>
+        </div>
+    </section>
+
+    <!-- Stores Grid -->
+    <section class="container py-5">
+        <div class="row">
+            {% for store in stores %}
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">{{ store.name }}</h5>
+                        <p class="text-muted small">{{ store.location }}</p>
+                        <p class="card-text">{{ store.description|truncatewords:20 }}</p>
+                        <a href="{% url 'ecommerce:store_detail' store.id %}" class="btn btn-primary btn-sm mt-2">View Store</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted fs-5">No stores are available yet. Please check back soon!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-1">&copy; 2025 Welcome To My Shop</p>
+            <ul class="list-inline mb-0">
+                <li class="list-inline-item"><a href="#" class="text-decoration-none text-white-50">About</a></li>
+                <li class="list-inline-item"><a href="#" class="text-decoration-none text-white-50">Terms & Conditions</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

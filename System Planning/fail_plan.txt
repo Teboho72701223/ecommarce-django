@@ -1,0 +1,9 @@
+Potential Failure	              |      System Reaction / Recovery
+User submits invalid form data	  |      Show error messages; preserve user input
+Database connection fails	      |      Display user-friendly error; retry later
+Unauthorized access attempt	      |      Redirect to login or show “Access Denied”
+Product or store not found	      |      Show 404 “Not Found” page
+Payment failure	                  |      Display failure message, don’t confirm order
+Image upload too large            |      Validate file type and size before upload
+or wrong format                   |
+Server crash	                  |      Use Django logging for debugging and restart service

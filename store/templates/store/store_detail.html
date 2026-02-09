@@ -1,0 +1,142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ store.name }} | MyShop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{% static 'store/style.css' %}">
+</head>
+
+<body class="bg-light">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'ecommerce:home' %}">MyShop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:home' %}">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:product_list' %}">Shop</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'ecommerce:vendor_dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:cart' %}">Cart</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'ecommerce:logout' %}">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Store Header -->
+    <section class="text-center py-5 bg-light border-bottom">
+        <div class="container">
+            <h1 class="fw-bold">{{ store.name }}</h1>
+            <p class="lead text-muted mb-1">{{ store.location }}</p>
+            <p class="text-muted">{{ store.description }}</p>
+        </div>
+    </section>
+
+    <!-- Product Section -->
+    <section class="container py-5">
+        <h3 class="fw-bold text-center mb-4">Products Available</h3>
+
+        {% if products %}
+        <div class="row g-4">
+            {% for product in products %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm border-0">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'store/default-product.jpg' %}" class="card-img-top" alt="{{ product.name }}">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold">{{ product.name }}</h5>
+                        <p class="card-text text-muted">{{ product.description|truncatewords:20 }}</p>
+                        <p class="fw-semibold text-primary mb-3">R{{ product.price }}</p>
+
+                        <form method="POST" action="{% url 'ecommerce:add_to_cart' product.id %}" class="mt-auto">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="bi bi-cart-plus"></i> Add to Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'ecommerce:cart' %}" class="btn btn-primary btn-lg">
+                Proceed to Checkout
+            </a>
+        </div>
+        {% else %}
+            <p class="text-center text-muted">No products available at this store yet.</p>
+        {% endif %}
+    </section>
+
+    <!-- Reviews Section -->
+    <section class="container py-5 border-top mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h3 class="fw-bold mb-4 text-center">Customer Reviews</h3>
+
+                {% for review in reviews %}
+                <div class="border rounded-3 p-3 mb-3 bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>{{ review.customer.username }}</strong>
+                        <span class="text-warning">
+                            {% for i in "12345"|slice:":review.rating"|make_list %}★{% endfor %}
+                            {% for i in "12345"|slice:"review.rating:"|make_list %}☆{% endfor %}
+                        </span>
+                    </div>
+                    <p class="mb-0 text-muted">{{ review.comment }}</p>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">No reviews yet. Be the first to review this store!</p>
+                {% endfor %}
+
+                {% if user.is_authenticated %}
+                <hr class="my-4">
+                <h4 class="fw-bold mb-3">Leave a Review</h4>
+                <form method="post" class="bg-white p-4 rounded shadow-sm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Rating (1-5)</label>
+                        {{ form.rating }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Your Comment</label>
+                        {{ form.comment }}
+                    </div>
+                    <button type="submit" class="btn btn-success">Submit Review</button>
+                </form>
+                {% else %}
+                <p class="text-center mt-4">
+                    <a href="{% url 'ecommerce:login' %}" class="text-decoration-none">Login</a> to leave a review.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-1">&copy; 2025 Welcome To My Shop</p>
+            <ul class="list-inline mb-0">
+                <li class="list-inline-item"><a href="#" class="text-decoration-none text-white-50">About</a></li>
+                <li class="list-inline-item"><a href="#" class="text-decoration-none text-white-50">Terms & Conditions</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

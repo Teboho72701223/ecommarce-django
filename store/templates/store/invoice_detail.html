@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice #{{ order.id }} - MyShop</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'store/style.css' %}">
+</head>
+
+<body class="bg-light">
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#">MyShop</a>
+        <div class="collapse navbar-collapse justify-content-end">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'store:dashboard' %}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="#">Invoice</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- HEADER -->
+<header class="py-4 border-bottom bg-white">
+    <div class="container text-center">
+        <h1 class="fw-bold">Invoice</h1>
+        <p class="text-muted mb-0">Invoice #{{ order.id }}</p>
+    </div>
+</header>
+
+<!-- INVOICE CONTENT -->
+<section class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+
+                    <!-- TOP INFO -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Billed To</h6>
+                            <p class="mb-0">{{ order.user.get_full_name }}</p>
+                            <p class="mb-0 text-muted">{{ order.user.email }}</p>
+                        </div>
+
+                        <div class="col-md-6 text-md-end">
+                            <h6 class="fw-bold">Invoice Details</h6>
+                            <p class="mb-0">Invoice #: {{ order.id }}</p>
+                            <p class="mb-0">Date: {{ order.created_at|date:"d M Y" }}</p>
+                            <p class="mb-0">
+                                Status:
+                                <span class="badge bg-success">{{ order.status }}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TABLE -->
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Price</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td class="text-center">{{ item.quantity }}</td>
+                                    <td class="text-end">R {{ item.price }}</td>
+                                    <td class="text-end">
+                                        R {{ item.quantity|floatformat:0|add:item.price }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- TOTALS -->
+                    <div class="row justify-content-end mt-4">
+                        <div class="col-md-5">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Subtotal</span>
+                                    <strong>R {{ order.subtotal }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>Shipping</span>
+                                    <strong>R {{ order.shipping_fee }}</strong>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between fs-5">
+                                    <span>Total</span>
+                                    <strong>R {{ order.total }}</strong>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- ACTIONS -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'store:dashboard' %}" class="btn btn-outline-secondary">
+                            ← Back to Dashboard
+                        </a>
+
+                        <button onclick="window.print()" class="btn btn-success">
+                            Print Invoice
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-dark text-white text-center py-4 mt-5">
+    <div class="container">
+        <p class="mb-1">&copy; 2025 MyShop</p>
+        <small class="text-white-50">Thank you for shopping with us</small>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

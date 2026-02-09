@@ -1,0 +1,18 @@
+A. Pages for All Users
+= Home Page: Shows featured stores/products and navigation
+= Login / Register Pages: Authentication for vendors and customers
+
+B. Vendor Dashboard
+= My Stores Page: List of stores with Edit and Delete buttons
+= Create Store Page: Form to add a new store
+= Store Detail Page: Shows store information and list of products
+= Add/Edit Product Page: Form to add or modify a product
+= Orders Page: Displays all orders related to vendor products
+
+C. Customer Pages
+= Browse Products Page: Displays all products (from all stores)
+= Store Page: Displays products from one store
+= Cart Page: Shows selected products, total price, and checkout button
+= Checkout Page: Summary of order with confirmation
+= Product Detail Page: Shows product info, price, and reviews
+= Review Form: Form to add review for purchased product

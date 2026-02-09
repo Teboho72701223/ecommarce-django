@@ -1,0 +1,18 @@
+A. Authentication
+= Django’s built-in authentication system
+= Role-based access:
+    = Vendors → access to store/product management
+    = Customers → access to cart and review features
+    = Admins → full access
+
+B. Authorization
+= Vendors can only edit/delete their own stores and products.
+= Customers cannot access vendor dashboards.
+= Reviews only allowed for customers who purchased the product.
+
+C. Data Security
+= Use Django’s ORM to prevent SQL injection.
+= Use CSRF tokens in all forms.
+= Passwords are hashed using Django’s built-in security system.
+= Use HTTPS (SSL certificate) for secure data transfer.
+= Limit file upload types for store logos or product images.
