@@ -1,3 +1,10 @@
+"""
+Models for the ecommerce application.
+
+This module defines database models for users, vendors, stores,
+products, buyers, reviews, orders, and authentication-related data.
+"""
+
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import AbstractUser
@@ -7,11 +14,19 @@ from django.contrib.auth.models import AbstractUser
 # Custom User
 # -------------------------
 class CustomUser(AbstractUser):
+    """
+    Custom user model extending Django's AbstractUser.
+
+    Adds support for vendor and customer roles.
+    """
 
     is_vendor = models.BooleanField(default=False)
     is_customer = models.BooleanField(default=True)
 
     def __str__(self):
+        """
+        Returns the username of the user.
+        """
         return self.username
 
 
@@ -19,6 +34,9 @@ class CustomUser(AbstractUser):
 # Vendor
 # -------------------------
 class Vendor(models.Model):
+    """
+    Represents a vendor who owns and manages stores.
+    """
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -34,6 +52,9 @@ class Vendor(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns the vendor's store name.
+        """
         return self.store_name
 
 
@@ -41,6 +62,9 @@ class Vendor(models.Model):
 # Store
 # -------------------------
 class Store(models.Model):
+    """
+    Represents a physical or online store owned by a vendor.
+    """
 
     vendor = models.ForeignKey(
         Vendor,
@@ -61,6 +85,9 @@ class Store(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns the store name.
+        """
         return self.name
 
 
@@ -68,6 +95,9 @@ class Store(models.Model):
 # Product
 # -------------------------
 class Product(models.Model):
+    """
+    Represents a product sold in a store.
+    """
 
     store = models.ForeignKey(
         Store,
@@ -90,6 +120,9 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns the product name.
+        """
         return self.name
 
 
@@ -97,6 +130,9 @@ class Product(models.Model):
 # Buyer
 # -------------------------
 class Buyer(models.Model):
+    """
+    Represents a customer who purchases products.
+    """
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -108,6 +144,9 @@ class Buyer(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns the username of the buyer.
+        """
         return self.user.username
 
 
@@ -115,6 +154,9 @@ class Buyer(models.Model):
 # Review (Linked to Product)
 # -------------------------
 class Review(models.Model):
+    """
+    Represents a customer review for a product.
+    """
 
     product = models.ForeignKey(
         Product,
@@ -133,6 +175,9 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns the rating in readable format.
+        """
         return f"{self.rating}/5"
 
 
@@ -140,6 +185,9 @@ class Review(models.Model):
 # Orders
 # -------------------------
 class Order(models.Model):
+    """
+    Represents a customer order containing purchased products.
+    """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -163,6 +211,9 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """
+        Returns a readable order identifier.
+        """
         return f"Order #{self.id}"
 
 
@@ -170,6 +221,9 @@ class Order(models.Model):
 # Order Items
 # -------------------------
 class OrderItem(models.Model):
+    """
+    Represents an individual item in an order.
+    """
 
     order = models.ForeignKey(
         Order,
@@ -186,6 +240,9 @@ class OrderItem(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def total_price(self):
+        """
+        Calculates the total price for this order item.
+        """
         return self.quantity * self.price
 
 
@@ -193,6 +250,9 @@ class OrderItem(models.Model):
 # Password Reset Token
 # -------------------------
 class ResetToken(models.Model):
+    """
+    Stores password reset tokens for user authentication.
+    """
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
